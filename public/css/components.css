@@ -211,6 +211,27 @@
     margin-bottom: var(--spacing-lg);
 }
 
+.auth-form .form-group input {
+    width: 100% !important;
+    padding: var(--spacing-md) !important;
+    border: 1px solid var(--gray-300) !important;
+    border-radius: var(--radius-md) !important;
+    font-size: var(--font-size-sm) !important;
+    background: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.auth-form .form-group label {
+    display: block !important;
+    margin-bottom: var(--spacing-sm) !important;
+    font-weight: 500 !important;
+    color: var(--text-primary) !important;
+    visibility: visible !important;
+}
+
 .auth-switch {
     text-align: center;
     margin-top: var(--spacing-lg);

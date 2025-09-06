@@ -90,7 +90,6 @@ dist
 
 # Gatsby files
 .cache/
-public
 
 # Storybook build outputs
 .out
@@ -149,7 +148,6 @@ config/production.json
 
 # Uploads
 uploads/
-public/uploads/
 
 # Cache
 .cache/
