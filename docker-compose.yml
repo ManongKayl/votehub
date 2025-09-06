@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: votehub-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: votehub123
+      MONGO_INITDB_DATABASE: voting_system
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - votehub-network
+
+  # VoteHub Application
+  votehub-app:
+    build: .
+    container_name: votehub-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      MONGODB_URI: mongodb://admin:votehub123@mongodb:27017/voting_system?authSource=admin
+      JWT_SECRET: your_super_secret_jwt_key_change_in_production_2024
+      JWT_EXPIRES_IN: 7d
+      PORT: 3000
+      ADMIN_EMAIL: admin@votehub.com
+      ADMIN_PASSWORD: admin123
+      RATE_LIMIT_WINDOW_MS: 900000
+      RATE_LIMIT_MAX_REQUESTS: 100
+    depends_on:
+      - mongodb
+    networks:
+      - votehub-network
+    volumes:
+      - ./logs:/app/logs
+
+  # Redis for Session Storage (Optional)
+  redis:
+    image: redis:7-alpine
+    container_name: votehub-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - votehub-network
+
+  # Nginx Reverse Proxy (Optional for production)
+  nginx:
+    image: nginx:alpine
+    container_name: votehub-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - votehub-app
+    networks:
+      - votehub-network
+
+volumes:
+  mongodb_data:
+  redis_data:
+
+networks:
+  votehub-network:
+    driver: bridge
