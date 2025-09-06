@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A comprehensive voting system for creating and participating in polls">
+    <meta name="theme-color" content="#4f46e5">
+    
+    <title>VoteHub - Democratic Voting Platform</title>
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/images/icon-192x192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="VoteHub">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/responsive.css">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Socket.IO for real-time updates -->
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-spinner">
+            <i class="fas fa-vote-yea"></i>
+        </div>
+        <p>Loading VoteHub...</p>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-vote-yea"></i>
+                <span>VoteHub</span>
+            </div>
+            
+            <div class="nav-menu" id="nav-menu">
+                <a href="#home" class="nav-link active" data-section="home">
+                    <i class="fas fa-home"></i> Home
+                </a>
+                <a href="#polls" class="nav-link" data-section="polls">
+                    <i class="fas fa-poll"></i> Polls
+                </a>
+                <a href="#create" class="nav-link" data-section="create">
+                    <i class="fas fa-plus"></i> Create
+                </a>
+                <a href="#my-polls" class="nav-link auth-required" data-section="my-polls">
+                    <i class="fas fa-list"></i> My Polls
+                </a>
+                <a href="#admin" class="nav-link admin-only" data-section="admin">
+                    <i class="fas fa-cog"></i> Admin
+                </a>
+            </div>
+            
+            <div class="nav-auth">
+                <div class="auth-buttons" id="auth-buttons">
+                    <button class="btn btn-outline" id="login-btn">Login</button>
+                    <button class="btn btn-primary" id="register-btn">Register</button>
+                </div>
+                <div class="user-menu" id="user-menu" style="display: none;">
+                    <div class="user-info">
+                        <span id="user-name"></span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="dropdown-menu">
+                        <a href="#profile" id="profile-link">
+                            <i class="fas fa-user"></i> Profile
+                        </a>
+                        <a href="#settings" id="settings-link">
+                            <i class="fas fa-cog"></i> Settings
+                        </a>
+                        <a href="#" id="logout-btn">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="nav-toggle" id="nav-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Home Section -->
+        <section id="home-section" class="section active">
+            <div class="hero">
+                <div class="hero-content">
+                    <h1>Welcome to VoteHub</h1>
+                    <p>Create polls, gather opinions, and make democratic decisions with our comprehensive voting platform.</p>
+                    <div class="hero-actions">
+                        <button class="btn btn-primary btn-large" id="get-started-btn">Get Started</button>
+                        <button class="btn btn-outline btn-large" id="explore-polls-btn">Explore Polls</button>
+                    </div>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat-card">
+                        <h3 id="total-polls">0</h3>
+                        <p>Total Polls</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="total-votes">0</h3>
+                        <p>Votes Cast</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="active-users">0</h3>
+                        <p>Active Users</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="featured-polls">
+                <h2>Featured Polls</h2>
+                <div class="polls-grid" id="featured-polls-grid">
+                    <!-- Featured polls will be loaded here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Polls Section -->
+        <section id="polls-section" class="section">
+            <div class="section-header">
+                <h2>All Polls</h2>
+                <div class="filters">
+                    <select id="category-filter">
+                        <option value="all">All Categories</option>
+                        <option value="general">General</option>
+                        <option value="politics">Politics</option>
+                        <option value="entertainment">Entertainment</option>
+                        <option value="sports">Sports</option>
+                        <option value="technology">Technology</option>
+                        <option value="education">Education</option>
+                        <option value="business">Business</option>
+                        <option value="other">Other</option>
+                    </select>
+                    <select id="sort-filter">
+                        <option value="createdAt">Newest</option>
+                        <option value="totalVotes">Most Voted</option>
+                        <option value="title">Alphabetical</option>
+                    </select>
+                    <div class="search-box">
+                        <input type="text" id="search-input" placeholder="Search polls...">
+                        <i class="fas fa-search"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="polls-container">
+                <div class="polls-grid" id="polls-grid">
+                    <!-- Polls will be loaded here -->
+                </div>
+                <div class="pagination" id="polls-pagination">
+                    <!-- Pagination will be loaded here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Create Poll Section -->
+        <section id="create-section" class="section">
+            <div class="create-poll-container">
+                <h2>Create New Poll</h2>
+                <form id="create-poll-form" class="poll-form">
+                    <div class="form-group">
+                        <label for="poll-title">Poll Title *</label>
+                        <input type="text" id="poll-title" name="title" required maxlength="200">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="poll-description">Description</label>
+                        <textarea id="poll-description" name="description" rows="3" maxlength="1000"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Poll Options *</label>
+                        <div id="poll-options">
+                            <div class="option-input">
+                                <input type="text" name="option" placeholder="Option 1" required maxlength="200">
+                                <button type="button" class="btn-remove-option" disabled>
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="option-input">
+                                <input type="text" name="option" placeholder="Option 2" required maxlength="200">
+                                <button type="button" class="btn-remove-option" disabled>
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button type="button" id="add-option-btn" class="btn btn-outline">
+                            <i class="fas fa-plus"></i> Add Option
+                        </button>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="poll-category">Category</label>
+                            <select id="poll-category" name="category">
+                                <option value="general">General</option>
+                                <option value="politics">Politics</option>
+                                <option value="entertainment">Entertainment</option>
+                                <option value="sports">Sports</option>
+                                <option value="technology">Technology</option>
+                                <option value="education">Education</option>
+                                <option value="business">Business</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="poll-end-date">End Date (Optional)</label>
+                            <input type="datetime-local" id="poll-end-date" name="endDate">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="poll-tags">Tags (comma-separated)</label>
+                        <input type="text" id="poll-tags" name="tags" placeholder="democracy, opinion, survey">
+                    </div>
+                    
+                    <div class="form-options">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="poll-public" name="isPublic" checked>
+                            <span class="checkmark"></span>
+                            Make poll public
+                        </label>
+                        
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="poll-multiple-votes" name="allowMultipleVotes">
+                            <span class="checkmark"></span>
+                            Allow multiple votes per user
+                        </label>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-outline" id="preview-poll-btn">Preview</button>
+                        <button type="submit" class="btn btn-primary">Create Poll</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- My Polls Section -->
+        <section id="my-polls-section" class="section">
+            <div class="section-header">
+                <h2>My Polls</h2>
+                <button class="btn btn-primary" id="create-new-poll-btn">
+                    <i class="fas fa-plus"></i> Create New Poll
+                </button>
+            </div>
+            
+            <div class="my-polls-container">
+                <div class="polls-grid" id="my-polls-grid">
+                    <!-- User's polls will be loaded here -->
+                </div>
+                <div class="pagination" id="my-polls-pagination">
+                    <!-- Pagination will be loaded here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Admin Section -->
+        <section id="admin-section" class="section">
+            <div class="admin-dashboard">
+                <h2>Admin Dashboard</h2>
+                
+                <div class="dashboard-stats" id="dashboard-stats">
+                    <!-- Dashboard statistics will be loaded here -->
+                </div>
+                
+                <div class="admin-tabs">
+                    <button class="tab-btn active" data-tab="users">Users</button>
+                    <button class="tab-btn" data-tab="polls">Polls</button>
+                    <button class="tab-btn" data-tab="analytics">Analytics</button>
+                </div>
+                
+                <div class="tab-content">
+                    <div id="users-tab" class="tab-pane active">
+                        <!-- Users management will be loaded here -->
+                    </div>
+                    <div id="polls-tab" class="tab-pane">
+                        <!-- Polls management will be loaded here -->
+                    </div>
+                    <div id="analytics-tab" class="tab-pane">
+                        <!-- Analytics will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modals -->
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Login</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form id="login-form" class="auth-form">
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" name="password" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Login</button>
+            </form>
+            <p class="auth-switch">
+                Don't have an account? <a href="#" id="switch-to-register">Register here</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="register-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Register</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form id="register-form" class="auth-form">
+                <div class="form-group">
+                    <label for="register-username">Username</label>
+                    <input type="text" id="register-username" name="username" required minlength="3" maxlength="30">
+                </div>
+                <div class="form-group">
+                    <label for="register-email">Email</label>
+                    <input type="email" id="register-email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-password">Password</label>
+                    <input type="password" id="register-password" name="password" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label for="register-confirm-password">Confirm Password</label>
+                    <input type="password" id="register-confirm-password" name="confirmPassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Register</button>
+            </form>
+            <p class="auth-switch">
+                Already have an account? <a href="#" id="switch-to-login">Login here</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Poll Detail Modal -->
+    <div id="poll-modal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3 id="poll-modal-title"></h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div id="poll-modal-body">
+                <!-- Poll details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notification-container" class="notification-container">
+        <!-- Notifications will appear here -->
+    </div>
+
+    <!-- Scripts -->
+    <script src="/js/config.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/ui.js"></script>
+    <script src="/js/polls.js"></script>
+    <script src="/js/admin.js"></script>
+    <script src="/js/realtime.js"></script>
+    <script src="/js/app.js"></script>
+</body>
+</html>
